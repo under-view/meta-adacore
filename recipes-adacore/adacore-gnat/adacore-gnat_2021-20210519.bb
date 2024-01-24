@@ -8,6 +8,8 @@ RDEPENDS:${PN} = ""
 
 inherit ada-sources
 
+INHIBIT_DEFAULT_DEPS = "1"
+
 GNATC_FNAME = "gnat-${PV}-${TARGET_ARCH}"
 GNATC_DOWNLOAD_FNAME ?= "${GNATC_FNAME}-linux-bin"
 
