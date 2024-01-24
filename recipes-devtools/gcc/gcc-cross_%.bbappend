@@ -5,9 +5,11 @@ ADA := ",ada"
 
 LANGUAGES .= "${ADA}"
 
-DEPENDS += "adacore-gnat-native"
+DEPENDS += "alire-gnat-native"
 
-PATH:prepend = "${RECIPE_SYSROOT_NATIVE}/usr/bin/gnat-community/bin:"
+inherit ada-sources
+
+PATH:prepend = "${RECIPE_SYSROOT_NATIVE}/usr/bin/${ALIREC}/bin:"
 
 # Modelled after gcc-package-target.inc
 PACKAGES += "\
