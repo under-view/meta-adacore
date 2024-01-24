@@ -26,7 +26,8 @@ SRC_URI[gnat-community-bin.sha256sum] = "5fc98a8eea7232ae2170266875d537c1707adc8
 
 # Core Install
 do_install() {
-    install -d ${WORKDIR}/${GNATC}-extract ${WORKDIR}/tmp-${GNATC}
+    final_install_dir=${D}/${bindir}/${GNATC}
+    install -d ${WORKDIR}/${GNATC}-extract ${final_install_dir}
 
     cd ${WORKDIR}/${GNATC}
 
@@ -35,23 +36,15 @@ do_install() {
         ${WORKDIR}/${GNATC}-extract \
         com.adacore,com.adacore.gnat || ret=$?
 
-    make -C ${WORKDIR}/${GNATC}-extract ins-all prefix=${WORKDIR}/tmp-${GNATC}
-}
+    make -C ${WORKDIR}/${GNATC}-extract ins-all prefix=${final_install_dir}
 
-do_install:append() {
-    install -d ${D}/${bindir}
+    find ${final_install_dir} -name ld -exec mv -v {} {}.old \; || ret=$?
+    find ${final_install_dir} -name as -exec mv -v {} {}.old \; || ret=$?
 
-    cp -a ${WORKDIR}/tmp-${GNATC}/bin/gnat* ${D}/${bindir}
-    cp -a ${WORKDIR}/tmp-${GNATC}/bin/gpr* ${D}/${bindir}
-
-    cp -a ${D}/${bindir}/gnatbind ${D}/${bindir}/${TARGET_ARCH}-linux-gnatbind
-    cp -a ${D}/${bindir}/gnatmake ${D}/${bindir}/${TARGET_ARCH}-linux-gnatmake
-
-    rm -rf ${WORKDIR}/tmp-${GNATC} ${WORKDIR}/${GNATC}-extract
+    rm -rf ${WORKDIR}/${GNATC}-extract
 }
 
 PACKAGES = "${PN}"
-FILES:${PN} = "${GNATC}"
 INSANE_SKIP:${PN} += "already-stripped"
 
 BBCLASSEXTEND = "native"
