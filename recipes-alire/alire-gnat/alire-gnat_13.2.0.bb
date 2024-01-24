@@ -9,6 +9,8 @@ RDEPENDS:${PN} = ""
 
 inherit ada-sources
 
+INHIBIT_DEFAULT_DEPS = "1"
+
 PR = "1"
 
 GNATC_FNAME = "gnat-x86_64-linux-${PV}-${PR}"
