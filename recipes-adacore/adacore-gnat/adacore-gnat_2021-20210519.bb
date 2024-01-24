@@ -1,16 +1,18 @@
 SUMMARY = "Adacore community gnat compiler and tools"
 HOMEPAGE = "https://www.adacore.com"
 LICENSE = "CLOSED"
-SECTION = "libs"
+SECTION = "utils/devel"
 
 DEPENDS = ""
-RDEPENDS = ""
+RDEPENDS:${PN} = ""
 
-GNATC = "gnat-community"
-GNATC_FNAME ?= "gnat-${PV}-${TARGET_ARCH}-linux-bin"
+inherit ada-sources
+
+GNATC_FNAME = "gnat-${PV}-${TARGET_ARCH}"
+GNATC_DOWNLOAD_FNAME ?= "${GNATC_FNAME}-linux-bin"
 
 GNATC_DOWNLOAD_HASH ?= "f3a99d283f7b3d07293b2e1d07de00e31e332325"
-GNATC_DOWNLOAD_SRC = "https://community.download.adacore.com/v1/${GNATC_DOWNLOAD_HASH}?filename=gnat-${PV}-${TARGET_ARCH}-linux-bin"
+GNATC_DOWNLOAD_SRC = "${ADACORE_COMMUNITY}/v1/${GNATC_DOWNLOAD_HASH}?filename=${GNATC_DOWNLOAD_FNAME}"
 GNATC_INSTALL_SCRIPT = "git://git@github.com/AdaCore/gnat_community_install_script.git"
 
 SRCREV_FORMAT .= "_${GNATC}"
