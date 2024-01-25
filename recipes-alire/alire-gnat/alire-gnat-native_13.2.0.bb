@@ -4,10 +4,10 @@ LICENSE = "CLOSED"
 
 SECTION = "utils/devel"
 
+inherit ada-sources native
+
 DEPENDS = ""
 RDEPENDS:${PN} = ""
-
-inherit ada-sources
 
 INHIBIT_DEFAULT_DEPS = "1"
 
@@ -23,7 +23,7 @@ SRC_URI = "${GNATC_DOWNLOAD_SRC}/${GNATC_DOWNLOAD_FNAME};name=${ALIREC}-tarball;
 
 SRC_URI[alire-community-tarball.sha256sum] = "788a01f91f54259a6a9fb44f0c1f36b83cbf0ef06a8e6a9c601a4c46581a07a8"
 
-do_install() {
+do_install:class-native() {
     install -d ${D}/${bindir}/${ALIREC}
     tar xf ${WORKDIR}/${GNATC_DOWNLOAD_FNAME} -C ${WORKDIR}
     cp -a ${WORKDIR}/${GNATC_FNAME}/* ${D}/${bindir}/${ALIREC}/
@@ -32,4 +32,3 @@ do_install() {
 
 PACKAGES = "${BPN}"
 INSANE_SKIP:${PN} += "already-stripped"
-BBCLASSEXTEND = "native"
