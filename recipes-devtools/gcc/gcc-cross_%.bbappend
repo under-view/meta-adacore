@@ -11,6 +11,8 @@ inherit ada-sources
 
 PATH:prepend = "${RECIPE_SYSROOT_NATIVE}/usr/bin/${ALIREC}/bin:"
 
+TARGET_CFLAGS:append = " -Dinhibit_libc"
+
 # Modelled after gcc-package-target.inc
 PACKAGES += "\
     gnat \
