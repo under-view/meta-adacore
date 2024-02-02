@@ -1,6 +1,6 @@
 DEPENDS:append = " bison-native linux-libc-headers"
 
-SRCBRANCH ?= "release/2.38/master"
+SRCBRANCH ?= "release/2.37/master"
 GLIBC_GIT_URI ?= "git://sourceware.org/git/glibc.git;protocol=https"
 GLIBC_DIR = "glibc"
 
@@ -10,7 +10,7 @@ SRC_URI:append = "\
     ${GLIBC_GIT_URI};branch=${SRCBRANCH};name=${GLIBC_DIR};subdir=${GLIBC_DIR} \
     "
 
-SRCREV_glibc ?= "1e04dcec491bd8f48b5b74ce3e8414132578a645"
+SRCREV_glibc ?= "8b849f70b397bae04ddad20ace07561103a8260a"
 
 do_install_glibc_headers() {
     final_install_dir=$1
