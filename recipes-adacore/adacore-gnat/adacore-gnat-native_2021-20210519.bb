@@ -3,7 +3,7 @@ HOMEPAGE = "https://www.adacore.com"
 LICENSE = "CLOSED"
 SECTION = "utils/devel"
 
-inherit ada-sources native
+inherit ada-sources glibc-headers native
 
 DEPENDS = ""
 RDEPENDS:${PN} = ""
@@ -25,8 +25,8 @@ SRC_URI = "\
     ${GNATC_DOWNLOAD_SRC};name=${GNATC}-bin;downloadfilename=${GNATC_FNAME} \
     "
 
-SRCREV_gnat-community = "f74ecb07969938978c32a666b4c58790f3cf2e7d"
-SRC_URI[gnat-community-bin.sha256sum] = "5fc98a8eea7232ae2170266875d537c1707adc827b4a1bd0893b805414f40837"
+SRCREV_gnat-community ?= "f74ecb07969938978c32a666b4c58790f3cf2e7d"
+SRC_URI[gnat-community-bin.sha256sum] ?= "5fc98a8eea7232ae2170266875d537c1707adc827b4a1bd0893b805414f40837"
 
 do_install:class-native() {
     final_install_dir=${D}/${bindir}/${GNATC}
@@ -45,6 +45,7 @@ do_install:class-native() {
     find ${final_install_dir} -name as -exec mv -v {} {}.old \; || ret=$?
 
     rm -rf ${WORKDIR}/${GNATC}-extract
+    do_install_glibc_headers ${final_install_dir}
 }
 
 PACKAGES = "${PN}"
