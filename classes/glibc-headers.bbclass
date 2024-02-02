@@ -35,5 +35,7 @@ do_install_glibc_headers() {
                  --cache-file=${glibc_build_dir}/config.cache \
 
     oe_runmake install-headers
+
+    cp -ra ${WORKDIR}/${GLIBC_DIR}/include/gnu ${final_install_dir}/include
 }
 
