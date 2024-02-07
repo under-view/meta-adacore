@@ -9,19 +9,30 @@ DEPENDS += "alire-gnat-native"
 
 inherit ada-sources
 
-PATH:prepend = "${RECIPE_SYSROOT_NATIVE}/usr/bin/${ALIREC}/bin:"
+SYSROOT_PATH = "${RECIPE_SYSROOT_NATIVE}/usr/bin/${ALIREC}"
+
+PATH:prepend = "${SYSROOT_PATH}/bin:"
 
 TARGET_CFLAGS:append = " -Dinhibit_libc"
-TARGET_CFLAGS:append = " -I${RECIPE_SYSROOT_NATIVE}/usr/bin/${ALIREC}/include"
+TARGET_CFLAGS:append = " -I${SYSROOT_PATH}/include"
 
-# Modelled after gcc-package-target.inc
+TARGET_LDFLAGS:append = " -L${SYSROOT_PATH}/lib"
+
+EXTRA_OECONF_PATHS:remove = "--with-build-sysroot=${STAGING_DIR_TARGET}"
+EXTRA_OECONF_PATHS:append = " --with-build-sysroot=${SYSROOT_PATH}"
+
+do_compile:prepend() {
+    mkdir -p ${B}/${TARGET_SYS}/libgcc
+    cp -a ${SYSROOT_PATH}/lib/crt*.o ${B}/${TARGET_SYS}/libgcc
+}
+
+EXTRA_OECONF += "--enable-libada --enable-static=libada"
+
 PACKAGES += "\
     gnat \
     gnat-dev \
     gnat-symlinks \
     "
-
-EXTRA_OECONF += "--enable-libada --enable-static=libada"
 
 FILES:gnat = "\
     ${bindir}/${TARGET_PREFIX}gnat \
