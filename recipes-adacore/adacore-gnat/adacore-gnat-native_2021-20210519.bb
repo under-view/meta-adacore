@@ -28,7 +28,7 @@ SRC_URI = "\
 SRCREV_gnat-community ?= "f74ecb07969938978c32a666b4c58790f3cf2e7d"
 SRC_URI[gnat-community-bin.sha256sum] ?= "5fc98a8eea7232ae2170266875d537c1707adc827b4a1bd0893b805414f40837"
 
-do_install:class-native() {
+do_install() {
     final_install_dir=${D}/${bindir}/${GNATC}
     install -d ${WORKDIR}/${GNATC}-extract ${final_install_dir}
 
