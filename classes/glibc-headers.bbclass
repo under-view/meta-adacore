@@ -36,6 +36,7 @@ do_install_glibc_headers() {
     glibc_build_dir=${WORKDIR}/${GLIBC_DIR}/${GLIBC_DIR}-build
 
     mkdir -p ${glibc_build_dir}
+    mkdir -p ${final_install_dir}/usr/include
 
     # To support NPTL
     # See: https://man7.org/linux/man-pages/man7/nptl.7.html
@@ -52,7 +53,5 @@ do_install_glibc_headers() {
     oe_runmake
     oe_runmake install
     oe_runmake install-headers
-
-    cp -ra ${WORKDIR}/${GLIBC_DIR}/include/gnu ${final_install_dir}/include
 }
 
