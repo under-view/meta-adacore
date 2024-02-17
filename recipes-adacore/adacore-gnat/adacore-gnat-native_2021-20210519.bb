@@ -10,8 +10,8 @@ RDEPENDS:${PN} = ""
 
 INHIBIT_DEFAULT_DEPS = "1"
 
-GNATC_FNAME = "gnat-${PV}-${TARGET_ARCH}"
-GNATC_DOWNLOAD_FNAME ?= "${GNATC_FNAME}-linux-bin"
+GNATC_NAME = "gnat-${PV}-${TARGET_ARCH}"
+GNATC_DOWNLOAD_FNAME ?= "${GNATC_NAME}-linux-bin"
 
 GNATC_DOWNLOAD_HASH ?= "f3a99d283f7b3d07293b2e1d07de00e31e332325"
 GNATC_DOWNLOAD_SRC = "${ADACORE_COMMUNITY}/v1/${GNATC_DOWNLOAD_HASH}?filename=${GNATC_DOWNLOAD_FNAME}"
@@ -22,11 +22,13 @@ SRCREV_FORMAT .= "_${GNATC}-bin"
 
 SRC_URI = "\
     ${GNATC_INSTALL_SCRIPT};protocol=https;branch=master;name=${GNATC};subdir=${GNATC} \
-    ${GNATC_DOWNLOAD_SRC};name=${GNATC}-bin;downloadfilename=${GNATC_FNAME} \
+    ${GNATC_DOWNLOAD_SRC};name=${GNATC}-bin;downloadfilename=${GNATC_NAME} \
     "
 
 SRCREV_gnat-community ?= "f74ecb07969938978c32a666b4c58790f3cf2e7d"
 SRC_URI[gnat-community-bin.sha256sum] ?= "5fc98a8eea7232ae2170266875d537c1707adc827b4a1bd0893b805414f40837"
+
+PATH:prepend = "${WORKDIR}/${GNATC_NAME}/bin:"
 
 do_install() {
     final_install_dir=${D}/${bindir}/${GNATC}
@@ -35,7 +37,7 @@ do_install() {
     cd ${WORKDIR}/${GNATC}
 
     ./install_package.sh \
-        ${WORKDIR}/${GNATC_FNAME} \
+        ${WORKDIR}/${GNATC_NAME} \
         ${WORKDIR}/${GNATC}-extract \
         com.adacore,com.adacore.gnat || ret=$?
 
