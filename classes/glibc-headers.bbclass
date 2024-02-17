@@ -1,6 +1,6 @@
 DEPENDS:append = " bison-native linux-libc-headers"
 
-SRCBRANCH ?= "release/2.37/master"
+SRCBRANCH ?= "release/2.39/master"
 GLIBC_GIT_URI ?= "git://sourceware.org/git/glibc.git;protocol=https"
 GLIBC_DIR = "glibc"
 
@@ -10,7 +10,7 @@ SRC_URI:append = "\
     ${GLIBC_GIT_URI};branch=${SRCBRANCH};name=${GLIBC_DIR};subdir=${GLIBC_DIR} \
     "
 
-SRCREV_glibc ?= "8b849f70b397bae04ddad20ace07561103a8260a"
+SRCREV_glibc ?= "312e159626b67fe11f39e83e222cf4348a3962f3"
 
 EXTRA_OECONF = "--enable-kernel=${OLDEST_KERNEL} \
                 --disable-profile \
@@ -25,7 +25,6 @@ EXTRA_OECONF = "--enable-kernel=${OLDEST_KERNEL} \
                 --with-default-link \
                 --disable-werror \
                 --enable-fortify-source \
-                --enable-cet \
                 ${@bb.utils.contains_any('SELECTED_OPTIMIZATION', '-O0 -Og', '--disable-werror', '', d)} \
                 --host=${TARGET_SYS} \
                 --build=${HOST_SYS} \
@@ -33,12 +32,13 @@ EXTRA_OECONF = "--enable-kernel=${OLDEST_KERNEL} \
                 --with-headers=${RECIPE_SYSROOT}/usr/include \
                 "
 
+EXTRA_OECONF:append:x86-64 = " --enable-cet"
+
 do_install_glibc_headers() {
     final_install_dir=$1
     glibc_build_dir=${WORKDIR}/${GLIBC_DIR}/${GLIBC_DIR}-build
 
     mkdir -p ${glibc_build_dir}
-    mkdir -p ${final_install_dir}/usr/include
     mkdir -p ${final_install_dir}/include/gnu
 
     # To support NPTL
@@ -77,4 +77,3 @@ do_install_glibc_headers() {
 
     touch ${final_install_dir}/include/gnu/stubs.h
 }
-
