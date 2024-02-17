@@ -14,7 +14,8 @@ SRCREV_glibc ?= "8b849f70b397bae04ddad20ace07561103a8260a"
 
 EXTRA_OECONF = "--enable-kernel=${OLDEST_KERNEL} \
                 --disable-profile \
-                --disable-debug --without-gd \
+                --disable-debug \
+                --without-gd \
                 --enable-clocale=gnu \
                 --with-headers=${STAGING_INCDIR} \
                 --without-selinux \
@@ -24,6 +25,7 @@ EXTRA_OECONF = "--enable-kernel=${OLDEST_KERNEL} \
                 --with-default-link \
                 --disable-werror \
                 --enable-fortify-source \
+                --enable-cet \
                 ${@bb.utils.contains_any('SELECTED_OPTIMIZATION', '-O0 -Og', '--disable-werror', '', d)} \
                 --host=${TARGET_SYS} \
                 --build=${HOST_SYS} \
@@ -37,6 +39,7 @@ do_install_glibc_headers() {
 
     mkdir -p ${glibc_build_dir}
     mkdir -p ${final_install_dir}/usr/include
+    mkdir -p ${final_install_dir}/include/gnu
 
     # To support NPTL
     # See: https://man7.org/linux/man-pages/man7/nptl.7.html
@@ -47,11 +50,31 @@ do_install_glibc_headers() {
 
     cd ${glibc_build_dir}
     ../configure ${EXTRA_OECONF} \
-                 --prefix=${final_install_dir} \
+                 --prefix=/usr \
                  --cache-file=${glibc_build_dir}/config.cache
 
-    oe_runmake
-    oe_runmake install
-    oe_runmake install-headers
+    oe_runmake \
+    install-bootstrap-headers="yes" \
+    install_root=${final_install_dir} \
+    install-headers
+
+    # To get the C Runtime Objects needed by programs to start
+    # https://docs.oracle.com/cd/E88353_01/html/E37853/crti.o-7.html
+    make csu/subdir_lib
+
+    install ${glibc_build_dir}/csu/crt1.o \
+            ${glibc_build_dir}/csu/crti.o \
+            ${glibc_build_dir}/csu/crtn.o \
+            ${glibc_build_dir}/csu/Scrt1.o \
+            ${final_install_dir}/lib
+
+    gcc \
+        -nostdlib \
+        -nostartfiles \
+        -shared \
+        -x c /dev/null \
+        -o ${final_install_dir}/lib/libc.so
+
+    touch ${final_install_dir}/include/gnu/stubs.h
 }
 
