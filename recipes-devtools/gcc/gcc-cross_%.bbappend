@@ -13,20 +13,34 @@ SYSROOT_PATH = "${RECIPE_SYSROOT_NATIVE}/usr/bin/${ALIREC}"
 
 PATH:prepend = "${SYSROOT_PATH}/bin:"
 
-TARGET_CFLAGS:append = " -Dinhibit_libc"
 TARGET_CFLAGS:append = " -I${SYSROOT_PATH}/include"
-
 TARGET_LDFLAGS:append = " -L${SYSROOT_PATH}/lib"
 
 EXTRA_OECONF_PATHS:remove = "--with-build-sysroot=${STAGING_DIR_TARGET}"
 EXTRA_OECONF_PATHS:append = " --with-build-sysroot=${SYSROOT_PATH}"
 
 do_compile:prepend() {
-    mkdir -p ${B}/${TARGET_SYS}/libgcc
-    cp -a ${SYSROOT_PATH}/lib/crt*.o ${B}/${TARGET_SYS}/libgcc
+    mkdir -p ${B}/${TARGET_SYS}/libada
+    cp -a ${SYSROOT_PATH}/lib/*crt*.o ${B}/${TARGET_SYS}/libada
 }
 
-EXTRA_OECONF += "--enable-libada --enable-static=libada"
+EXTRA_OECONF += " \
+    --enable-libada \
+    --enable-static=libada \
+    --with-newlib \
+    --without-headers \
+    --enable-default-pie \
+    --enable-default-ssp \
+    --disable-nls \
+    --disable-shared \
+    --disable-threads \
+    --disable-libatomic \
+    --disable-libgomp \
+    --disable-libquadmath \
+    --disable-libssp \
+    --disable-libvtv \
+    --disable-libstdcxx \
+    "
 
 PACKAGES += "\
     gnat \
