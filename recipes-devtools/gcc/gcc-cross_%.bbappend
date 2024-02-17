@@ -13,15 +13,49 @@ SYSROOT_PATH = "${RECIPE_SYSROOT_NATIVE}/usr/bin/${ALIREC}"
 
 PATH:prepend = "${SYSROOT_PATH}/bin:"
 
+TARGET_CFLAGS:append = " -I${RECIPE_SYSROOT}/usr/include"
+TARGET_CFLAGS:append = " -I${SYSROOT_PATH}/usr/include"
 TARGET_CFLAGS:append = " -I${SYSROOT_PATH}/include"
 TARGET_LDFLAGS:append = " -L${SYSROOT_PATH}/lib"
 
 EXTRA_OECONF_PATHS:remove = "--with-build-sysroot=${STAGING_DIR_TARGET}"
 EXTRA_OECONF_PATHS:append = " --with-build-sysroot=${SYSROOT_PATH}"
 
-do_compile:prepend() {
+do_compile () {
+    export CC="${BUILD_CC}"
+    export AR_FOR_TARGET="${TARGET_SYS}-ar"
+    export RANLIB_FOR_TARGET="${TARGET_SYS}-ranlib"
+    export LD_FOR_TARGET="${TARGET_SYS}-ld"
+    export NM_FOR_TARGET="${TARGET_SYS}-nm"
+    export CC_FOR_TARGET="${CCACHE} ${TARGET_SYS}-gcc"
+    export CFLAGS_FOR_TARGET="${TARGET_CFLAGS}"
+    export CPPFLAGS_FOR_TARGET="${TARGET_CPPFLAGS}"
+    export CXXFLAGS_FOR_TARGET="${TARGET_CXXFLAGS}"
+    export LDFLAGS_FOR_TARGET="${TARGET_LDFLAGS}"
+
+    # Prevent native/host sysroot path from being used in configargs.h header,
+    # as it will be rewritten when used by other sysroots preventing support
+    # for gcc plugins
+    oe_runmake configure-gcc
+    sed -i 's@${STAGING_DIR_TARGET}@/host@g' ${B}/gcc/configargs.h
+    sed -i 's@${STAGING_DIR_HOST}@/host@g' ${B}/gcc/configargs.h
+
+    # Prevent sysroot/workdir paths from being used in checksum-options.
+    # checksum-options is used to generate a checksum which is embedded into
+    # the output binary.
+    oe_runmake TARGET-gcc=checksum-options all-gcc
+    sed -i 's@${DEBUG_PREFIX_MAP}@@g' ${B}/gcc/checksum-options
+    sed -i 's@${STAGING_DIR_HOST}@/host@g' ${B}/gcc/checksum-options
+
+    # Build in ada
     mkdir -p ${B}/${TARGET_SYS}/libada
     cp -a ${SYSROOT_PATH}/lib/*crt*.o ${B}/${TARGET_SYS}/libada
+
+    sed -i 's@./config/i386/t-linux64@$(srcdir)/config/i386/t-linux64@g' \
+           ${B}/gcc/ada/gcc-interface/Makefile
+
+    oe_runmake all-host configure-target-libgcc
+    (cd ${B}/${TARGET_SYS}/libgcc; oe_runmake enable-execute-stack.c unwind.h md-unwind-support.h sfp-machine.h gthr-default.h)
 }
 
 EXTRA_OECONF += " \
