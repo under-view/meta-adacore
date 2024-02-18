@@ -76,4 +76,5 @@ do_install_glibc_headers() {
         -o ${final_install_dir}/lib/libc.so
 
     touch ${final_install_dir}/include/gnu/stubs.h
+    touch ${final_install_dir}/usr/include/gnu/stubs.h
 }
