@@ -135,6 +135,9 @@ FILES:gnat-symlinks = "\
 
 do_install:append() {
 
+    # Re-run make install to insure adalib,adainclude gets installed
+    oe_runmake 'DESTDIR=${D}' install
+
     cd "${D}/${bindir}"
 
     if [ -e ${TARGET_PREFIX}gnat ]; then
@@ -174,7 +177,4 @@ do_install:append() {
         ln -sf ${TARGET_PREFIX}gnatxref gnatxref || true
     fi
 
-    # Wipe precompiled gnat compiler pulled off internet.
-    # As it's nolonger required.
-    rm -rf ${SYSROOT_PATH}
 }
