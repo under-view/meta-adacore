@@ -1,7 +1,7 @@
 inherit gnat
-require recipes-devtools/gcc/ada.inc
+require recipes-devtools/gcc/ada-common.inc
 
-SYSROOT_PATH = ""
+SYSROOT_PATH = "gcc-target"
 
 PACKAGES += "\
     gnat \

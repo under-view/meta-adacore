@@ -1,48 +1,5 @@
-# Original source:
-# https://github.com/Lucretia/meta-ada/blob/master/recipes-devtools/gcc/gcc-cross_4.6.bbappend
-
-DEPENDS += "alire-gnat-native"
-
-inherit ada-sources
-require recipes-devtools/gcc/ada.inc
-
-SYSROOT_PATH = "${RECIPE_SYSROOT_NATIVE}/usr/bin/${ALIREC}"
-
-PATH:prepend = "${SYSROOT_PATH}/bin:"
-
-# For odd reasons when s-oscons-tmplt.c is being compiled. Compiler fails to find
-# limits.h even though it's include in SYSROOT_PATH
-# 
-# Bellow fixes compile issues by manually defining limits.h macros used by source
-# s-oscons-tmplt.c:321:95: error: 'INT_MAX' undeclared (first use in this function)
-# gcc/ada/s-oscons-tmplt.c:166:1: note: 'INT_MAX' is defined in header '<limits.h>'; did you forget to '#include <limits.h>'?
-#   165 | # include <signal.h>
-#   +++ |+#include <limits.h>
-#   166 | #endif
-TARGET_CFLAGS:append = " -DINT_MAX=2147483647"
-TARGET_CFLAGS:append = " -DLLONG_MAX=9223372036854775807LL"
-TARGET_CFLAGS:append = " -DLLONG_MIN=-9223372036854775808LL"
-TARGET_CFLAGS:append = " -I${RECIPE_SYSROOT}/usr/include"
-TARGET_CFLAGS:append = " -I${SYSROOT_PATH}/usr/include"
-TARGET_CFLAGS:append = " -I${SYSROOT_PATH}/include"
-
-TARGET_LDFLAGS:append = " -L${SYSROOT_PATH}/lib"
-
-EXTRA_OECONF_PATHS:remove = "--with-build-sysroot=${STAGING_DIR_TARGET}"
-EXTRA_OECONF_PATHS:append = " --with-build-sysroot=${SYSROOT_PATH}"
-
-EXTRA_OECONF += " \
-    --with-newlib \
-    --without-headers \
-    --enable-default-pie \
-    --enable-default-ssp \
-    --disable-nls \
-    --disable-shared \
-    --disable-libatomic \
-    --disable-libquadmath \
-    --disable-libssp \
-    --disable-libvtv \
-    "
+require recipes-devtools/gcc/ada-common.inc
+require recipes-devtools/gcc/ada-cross.inc
 
 do_install () {
     ( cd ${B}/${TARGET_SYS}/libgcc; oe_runmake 'DESTDIR=${D}' install-unwind_h-forbuild install-unwind_h )
