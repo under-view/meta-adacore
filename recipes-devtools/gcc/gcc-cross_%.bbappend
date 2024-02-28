@@ -1,13 +1,10 @@
 # Original source:
 # https://github.com/Lucretia/meta-ada/blob/master/recipes-devtools/gcc/gcc-cross_4.6.bbappend
 
-ADA := ",ada"
-
-LANGUAGES .= "${ADA}"
-
 DEPENDS += "alire-gnat-native"
 
 inherit ada-sources
+require recipes-devtools/gcc/ada.inc
 
 SYSROOT_PATH = "${RECIPE_SYSROOT_NATIVE}/usr/bin/${ALIREC}"
 
@@ -25,156 +22,61 @@ PATH:prepend = "${SYSROOT_PATH}/bin:"
 TARGET_CFLAGS:append = " -DINT_MAX=2147483647"
 TARGET_CFLAGS:append = " -DLLONG_MAX=9223372036854775807LL"
 TARGET_CFLAGS:append = " -DLLONG_MIN=-9223372036854775808LL"
-
 TARGET_CFLAGS:append = " -I${RECIPE_SYSROOT}/usr/include"
 TARGET_CFLAGS:append = " -I${SYSROOT_PATH}/usr/include"
 TARGET_CFLAGS:append = " -I${SYSROOT_PATH}/include"
+
 TARGET_LDFLAGS:append = " -L${SYSROOT_PATH}/lib"
 
 EXTRA_OECONF_PATHS:remove = "--with-build-sysroot=${STAGING_DIR_TARGET}"
 EXTRA_OECONF_PATHS:append = " --with-build-sysroot=${SYSROOT_PATH}"
 
-do_compile () {
-    export CC="${BUILD_CC}"
-    export AR_FOR_TARGET="${TARGET_SYS}-ar"
-    export RANLIB_FOR_TARGET="${TARGET_SYS}-ranlib"
-    export LD_FOR_TARGET="${TARGET_SYS}-ld"
-    export NM_FOR_TARGET="${TARGET_SYS}-nm"
-    export CC_FOR_TARGET="${CCACHE} ${TARGET_SYS}-gcc"
-    export CFLAGS_FOR_TARGET="${TARGET_CFLAGS}"
-    export CPPFLAGS_FOR_TARGET="${TARGET_CPPFLAGS}"
-    export CXXFLAGS_FOR_TARGET="${TARGET_CXXFLAGS}"
-    export LDFLAGS_FOR_TARGET="${TARGET_LDFLAGS}"
-
-    # Prevent native/host sysroot path from being used in configargs.h header,
-    # as it will be rewritten when used by other sysroots preventing support
-    # for gcc plugins
-    oe_runmake configure-gcc
-    sed -i 's@${STAGING_DIR_TARGET}@/host@g' ${B}/gcc/configargs.h
-    sed -i 's@${STAGING_DIR_HOST}@/host@g' ${B}/gcc/configargs.h
-
-    # Prevent sysroot/workdir paths from being used in checksum-options.
-    # checksum-options is used to generate a checksum which is embedded into
-    # the output binary.
-    oe_runmake TARGET-gcc=checksum-options all-gcc
-    sed -i 's@${DEBUG_PREFIX_MAP}@@g' ${B}/gcc/checksum-options
-    sed -i 's@${STAGING_DIR_HOST}@/host@g' ${B}/gcc/checksum-options
-
-    # Build in ada
-    mkdir -p ${B}/${TARGET_SYS}/libada
-    cp -a ${SYSROOT_PATH}/lib/*crt*.o ${B}/${TARGET_SYS}/libada
-
-    sed -i -e 's@./config/i386/t-linux64@$(srcdir)/config/i386/t-linux64@g' \
-              ${B}/gcc/ada/gcc-interface/Makefile
-
-    oe_runmake all-host configure-target-libgcc
-    (cd ${B}/${TARGET_SYS}/libgcc; oe_runmake enable-execute-stack.c unwind.h md-unwind-support.h sfp-machine.h gthr-default.h)
-}
-
 EXTRA_OECONF += " \
-    --enable-libada \
-    --enable-static=libada \
     --with-newlib \
     --without-headers \
     --enable-default-pie \
     --enable-default-ssp \
     --disable-nls \
     --disable-shared \
-    --disable-threads \
     --disable-libatomic \
-    --disable-libgomp \
     --disable-libquadmath \
     --disable-libssp \
     --disable-libvtv \
-    --disable-libstdcxx \
     "
 
-PACKAGES += "\
-    gnat \
-    gnat-dev \
-    gnat-symlinks \
-    "
+do_install () {
+    ( cd ${B}/${TARGET_SYS}/libgcc; oe_runmake 'DESTDIR=${D}' install-unwind_h-forbuild install-unwind_h )
 
-FILES:gnat = "\
-    ${bindir}/${TARGET_PREFIX}gnat \
-    ${bindir}/${TARGET_PREFIX}gnatbind \
-    ${bindir}/${TARGET_PREFIX}gnatchop \
-    ${bindir}/${TARGET_PREFIX}gnatclean \
-    ${bindir}/${TARGET_PREFIX}gnatfind \
-    ${bindir}/${TARGET_PREFIX}gnatkr \
-    ${bindir}/${TARGET_PREFIX}gnatlink \
-    ${bindir}/${TARGET_PREFIX}gnatls \
-    ${bindir}/${TARGET_PREFIX}gnatmake \
-    ${bindir}/${TARGET_PREFIX}gnatname \
-    ${bindir}/${TARGET_PREFIX}gnatprep \
-    ${bindir}/${TARGET_PREFIX}gnatxref \
-    ${libexecdir}/gcc/${TARGET_SYS}/${BINV}/gnat1 \
-    ${gcclibdir}/${TARGET_SYS}/${BINV}/adalib/lib*${SOLIBS} \
-    "
-
-FILES:gnat-dev = "\
-    ${gcclibdir}/${TARGET_SYS}/${BINV}/adalib/*.ali \
-    ${gcclibdir}/${TARGET_SYS}/${BINV}/adalib/lib*.a \
-    ${gcclibdir}/${TARGET_SYS}/${BINV}/adainclude/*.ad[sb] \
-    "
-
-FILES:gnat-symlinks = "\
-    ${bindir}/gnat \
-    ${bindir}/gnatbind \
-    ${bindir}/gnatchop \
-    ${bindir}/gnatclean \
-    ${bindir}/gnatfind \
-    ${bindir}/gnatkr \
-    ${bindir}/gnatlink \
-    ${bindir}/gnatls \
-    ${bindir}/gnatmake \
-    ${bindir}/gnatname \
-    ${bindir}/gnatprep \
-    ${bindir}/gnatxref \
-    "
-
-do_install:append() {
-
-    # Re-run make install to insure adalib,adainclude gets installed
+    # Run make install to ensuring adalib,adainclude gets installed
     oe_runmake 'DESTDIR=${D}' install
 
-    cd "${D}/${bindir}"
+    install -d ${D}${target_base_libdir}
+    install -d ${D}${target_libdir}
 
-    if [ -e ${TARGET_PREFIX}gnat ]; then
-        ln -sf ${TARGET_PREFIX}gnat gnat || true
-    fi
-    if [ -e ${TARGET_PREFIX}gnatbind ]; then
-        ln -sf ${TARGET_PREFIX}gnatbind gnatbind || true
-    fi
-    if [ -e ${TARGET_PREFIX}gnatchop ]; then
-        ln -sf ${TARGET_PREFIX}gnatchop gnatchop || true
-    fi
-    if [ -e ${TARGET_PREFIX}gnatclean ]; then
-        ln -sf ${TARGET_PREFIX}gnatclean gnatclean || true
-    fi
-    if [ -e ${TARGET_PREFIX}gnatfind ]; then
-        ln -sf ${TARGET_PREFIX}gnatfind gnatfind || true
-    fi
-    if [ -e ${TARGET_PREFIX}gnatkr ]; then
-        ln -sf ${TARGET_PREFIX}gnatkr gnatkr || true
-    fi
-    if [ -e ${TARGET_PREFIX}gnatlink ]; then
-        ln -sf ${TARGET_PREFIX}gnatlink gnatlink || true
-    fi
-    if [ -e ${TARGET_PREFIX}gnatls ]; then
-        ln -sf ${TARGET_PREFIX}gnatls gnatls || true
-    fi
-    if [ -e ${TARGET_PREFIX}gnatmake ]; then
-        ln -sf ${TARGET_PREFIX}gnatmake gnatmake || true
-    fi
-    if [ -e ${TARGET_PREFIX}gnatname ]; then
-        ln -sf ${TARGET_PREFIX}gnatname gnatname || true
-    fi
-    if [ -e ${TARGET_PREFIX}gnatprep ]; then
-        ln -sf ${TARGET_PREFIX}gnatprep gnatprep || true
-    fi
-    if [ -e ${TARGET_PREFIX}gnatxref ]; then
-        ln -sf ${TARGET_PREFIX}gnatxref gnatxref || true
+    # Link gfortran to g77 to satisfy not-so-smart configure or hard coded g77
+    # gfortran is fully backwards compatible. This is a safe and practical solution.
+    if [ -n "${@d.getVar('FORTRAN')}" ]; then
+        ln -sf ${STAGING_DIR_NATIVE}${prefix_native}/bin/${TARGET_PREFIX}gfortran ${STAGING_DIR_NATIVE}${prefix_native}/bin/${TARGET_PREFIX}g77 || true
+        fortsymlinks="g77 gfortran"
     fi
 
+    # Insert symlinks into libexec so when tools without a prefix are searched for, the correct ones are
+    # found. These need to be relative paths so they work in different locations.
+    dest=${D}${libexecdir}/gcc/${TARGET_SYS}/${BINV}/
+    install -d $dest
+    for t in ar as ld ld.bfd ld.gold nm objcopy objdump ranlib strip gcc cpp $fortsymlinks; do
+        ln -sf ${BINRELPATH}/${TARGET_PREFIX}$t $dest$t
+        ln -sf ${BINRELPATH}/${TARGET_PREFIX}$t ${dest}${TARGET_PREFIX}$t
+    done
+
+    # Remove things we don't need but keep share/java
+    for d in info man share/doc share/locale share/man share/info; do
+        rm -rf ${D}${STAGING_DIR_NATIVE}${prefix_native}/$d
+    done
+
+    find ${D}${libdir}/gcc/${TARGET_SYS}/${BINV}/include-fixed -type f -not -name "README" -not -name limits.h -not -name syslimits.h | xargs rm -f
+
+    # install LTO linker plugins where binutils tools can find it
+    install -d ${D}${libdir}/bfd-plugins
+    ln -sf ${LIBRELPATH}/liblto_plugin.so ${D}${libdir}/bfd-plugins/liblto_plugin.so
 }
