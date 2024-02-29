@@ -5,8 +5,6 @@ LANGUAGES .= "${ADA}"
 EXTRA_OECONF += "\
     --enable-libada \
     --enable-static=libada \
-    --disable-libgomp \
-    --disable-libstdcxx \
     "
 
 SYSROOT_PATH ?= ""
@@ -38,16 +36,6 @@ do_compile () {
         oe_runmake TARGET-gcc=checksum-options all-gcc
         sed -i 's@${DEBUG_PREFIX_MAP}@@g' ${B}/gcc/checksum-options
         sed -i 's@${STAGING_DIR_HOST}@/host@g' ${B}/gcc/checksum-options
-
-        if [ "${SYSROOT_PATH}" != "gcc-target" ]; then
-            # Copy Core C Runtime object files as they are seemingly
-            # undiscoverable when build with available community compiler
-            mkdir -p ${B}/${TARGET_SYS}/libada
-            mkdir -p ${B}/${TARGET_SYS}/libgcc
-
-            cp -a ${SYSROOT_PATH}/lib/*crt*.o ${B}/${TARGET_SYS}/libada
-            cp -a ${SYSROOT_PATH}/lib/*crt*.o ${B}/${TARGET_SYS}/libgcc
-        fi
 
         sed -i -e 's@./config/i386/t-linux64@$(srcdir)/config/i386/t-linux64@g' \
                   ${B}/gcc/ada/gcc-interface/Makefile
