@@ -59,6 +59,10 @@ do_configure:prepend() {
     sed -i 's@test x\"\$errors\" = x && test -f conftest.\$ac_objext;@test -f conftest.\$ac_objext;@g' \
            ${S}/configure
 
+    cp -a ${S}/gcc/ada/Make-generated.in ${S}/gcc/ada/Make-generated.in.backup
+    cp -a ${S}/gcc/ada/gcc-interface/Makefile.in ${S}/gcc/ada/gcc-interface/Makefile.in.backup
+    cp -a ${S}/libada/Makefile.in ${S}/libada/Makefile.in.backup
+
     # Replace generic gnatmake with one the utilizities gcc
     # cross compiler with gnat support generated from the yocto project.
     # Can't make this sed command generic as there are targets in the
@@ -76,5 +80,11 @@ do_configure:prepend() {
     sed -i \
         -e 's@CC=the.host.compiler.should.not.be.needed@CC=$(CC)@g' \
         ${S}/libada/Makefile.in
+}
 
+do_compile:append() {
+    # Revert changes so it doesn't affect future builds.
+    mv ${S}/gcc/ada/Make-generated.in.backup ${S}/gcc/ada/Make-generated.in
+    mv ${S}/gcc/ada/gcc-interface/Makefile.in.backup ${S}/gcc/ada/gcc-interface/Makefile.in
+    mv ${S}/libada/Makefile.in.backup ${S}/libada/Makefile.in
 }
