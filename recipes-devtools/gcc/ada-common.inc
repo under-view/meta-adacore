@@ -3,6 +3,7 @@ ADA := ",ada"
 LANGUAGES .= "${ADA}"
 
 EXTRA_OECONF += "\
+    --disable-libgomp \
     --enable-libada \
     --enable-static=libada \
     "
@@ -36,16 +37,21 @@ do_compile () {
         oe_runmake TARGET-gcc=checksum-options all-gcc
         sed -i 's@${DEBUG_PREFIX_MAP}@@g' ${B}/gcc/checksum-options
         sed -i 's@${STAGING_DIR_HOST}@/host@g' ${B}/gcc/checksum-options
-
-        sed -i -e 's@./config/i386/t-linux64@$(srcdir)/config/i386/t-linux64@g' \
-                  ${B}/gcc/ada/gcc-interface/Makefile
     fi
+
+    sed -i -e 's@./config/i386/t-linux64@$(srcdir)/config/i386/t-linux64@g' \
+              ${B}/gcc/ada/gcc-interface/Makefile
+    sed -i -e 's@./config/i386/t-linux64@$(srcdir)/config/i386/t-linux64@g' \
+              ${B}/gcc/Makefile
 
     oe_runmake all-host configure-target-libgcc
     (cd ${B}/${TARGET_SYS}/libgcc; oe_runmake enable-execute-stack.c unwind.h md-unwind-support.h sfp-machine.h gthr-default.h)
 }
 
 do_install:append() {
+
+    # Run ensure required adalib,adainclude gets installed
+    DESTDIR="${D}" oe_runmake -C "${B}" install-target-libada
 
     cd "${D}/${bindir}"
 
