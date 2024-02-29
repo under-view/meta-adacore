@@ -53,28 +53,6 @@ do_install_glibc_headers() {
                  --prefix=/usr \
                  --cache-file=${glibc_build_dir}/config.cache
 
-    oe_runmake \
-    install-bootstrap-headers="yes" \
-    install_root=${final_install_dir} \
-    install-headers
-
-    # To get the C Runtime Objects needed by programs to start
-    # https://docs.oracle.com/cd/E88353_01/html/E37853/crti.o-7.html
-    make csu/subdir_lib
-
-    install ${glibc_build_dir}/csu/crt1.o \
-            ${glibc_build_dir}/csu/crti.o \
-            ${glibc_build_dir}/csu/crtn.o \
-            ${glibc_build_dir}/csu/Scrt1.o \
-            ${final_install_dir}/lib
-
-    gcc \
-        -nostdlib \
-        -nostartfiles \
-        -shared \
-        -x c /dev/null \
-        -o ${final_install_dir}/lib/libc.so
-
-    touch ${final_install_dir}/include/gnu/stubs.h
-    touch ${final_install_dir}/usr/include/gnu/stubs.h
+    oe_runmake install_root=${final_install_dir}
+    oe_runmake install_root=${final_install_dir} install
 }
