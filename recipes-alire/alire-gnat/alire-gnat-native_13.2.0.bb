@@ -11,6 +11,8 @@ RDEPENDS:${PN} = ""
 
 INHIBIT_DEFAULT_DEPS = "1"
 
+PROVIDES += "virtual/gnat1"
+
 PR = "1"
 
 GNATC_NAME = "gnat-x86_64-linux-${PV}-${PR}"

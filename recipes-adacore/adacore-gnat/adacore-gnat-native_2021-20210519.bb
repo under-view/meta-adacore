@@ -8,6 +8,9 @@ inherit ada-sources glibc-headers native
 DEPENDS = ""
 RDEPENDS:${PN} = ""
 
+PROVIDES += "virtual/gprbuild1"
+PROVIDES += "virtual/gnat1"
+
 INHIBIT_DEFAULT_DEPS = "1"
 
 GNATC_NAME = "gnat-${PV}-${TARGET_ARCH}"

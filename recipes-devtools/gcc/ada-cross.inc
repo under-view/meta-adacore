@@ -1,8 +1,8 @@
 inherit ada-sources
 
-DEPENDS += "alire-gnat-native"
+DEPENDS += "virtual/gnat1"
 
-SYSROOT_PATH = "${RECIPE_SYSROOT_NATIVE}/usr/bin/${ALIREC}"
+SYSROOT_PATH = "${RECIPE_SYSROOT_NATIVE}/usr/bin/${ADA_COMMUNITY}"
 
 PATH:prepend = "${SYSROOT_PATH}/bin:"
 
