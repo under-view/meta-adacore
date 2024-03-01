@@ -4,6 +4,12 @@ require recipes-devtools/gcc/ada-common.inc
 
 SYSROOT_PATH = "gcc-target"
 
+# At the moment unable to determine what causes
+# libgnarl-13.so in package gnat doesn't have GNU_HASH (didn't pass LDFLAGS?)
+# LDFLAGS (-Wl,--hash-style=gnu) gets passed via GNATLINK in gnat.bbclass and
+# gets pass in LDFLAGS_FOR_TARGET during do_compile
+INSANE_SKIP:gnat += "ldflags"
+
 PACKAGES += "\
     gnat \
     gnat-dev \
@@ -25,15 +31,17 @@ FILES:gnat = "\
     ${bindir}/${TARGET_PREFIX}gnatprep \
     ${bindir}/${TARGET_PREFIX}gnatxref \
     ${libexecdir}/gcc/${TARGET_SYS}/${BINV}/gnat1 \
-    ${gcclibdir}/${TARGET_SYS}/${BINV}/ada_target_properties \
     ${gcclibdir}/${TARGET_SYS}/${BINV}/adalib/lib*${SOLIBS} \
+    ${gcclibdir}/${TARGET_SYS}/${BINV}/adalib/lib*-*${SOLIBSDEV} \
     "
 
 FILES:gnat-dev = "\
     ${gcclibdir}/${TARGET_SYS}/${BINV}/adalib/*.ali \
     ${gcclibdir}/${TARGET_SYS}/${BINV}/adainclude/*.ad[sb] \
     ${gcclibdir}/${TARGET_SYS}/${BINV}/adainclude/*.h \
-    ${gcclibdir}/${TARGET_SYS}/${BINV}/adalib/lib*${SOLIBSDEV} \
+    ${gcclibdir}/${TARGET_SYS}/${BINV}/adalib/libgnarl${SOLIBSDEV} \
+    ${gcclibdir}/${TARGET_SYS}/${BINV}/adalib/libgnat${SOLIBSDEV} \
+    ${gcclibdir}/${TARGET_SYS}/${BINV}/ada_target_properties \
     "
 
 FILES:gnat-staticdev = "\
@@ -70,8 +78,8 @@ do_configure:prepend() {
     # Copy over shared objects that only reside in RECIPE_SYSROOT_NATIVE at time of build
     # over to a location that is viewable during builds. So, that gcc builds.
     mkdir -p ${RECIPE_SYSROOT}/${libdir}/${TARGET_SYS}/${BINV}/adalib
-    cp -a ${RECIPE_SYSROOT_NATIVE}/usr/lib/${TARGET_SYS}/gcc/${TARGET_SYS}/${BINV}/adalib/lib*.so* \
-          ${RECIPE_SYSROOT}/${libdir}/${TARGET_SYS}/${BINV}/adalib
+    cp ${RECIPE_SYSROOT_NATIVE}/usr/lib/${TARGET_SYS}/gcc/${TARGET_SYS}/${BINV}/adalib/lib*.so* \
+       ${RECIPE_SYSROOT}/${libdir}/${TARGET_SYS}/${BINV}/adalib
 
     # Make a backup of the original source before using sed to make changes
     cp -a ${S}/gcc/ada/Make-generated.in ${S}/gcc/ada/Make-generated.in.backup
@@ -102,4 +110,8 @@ do_compile:append() {
     mv ${S}/gcc/ada/Make-generated.in.backup ${S}/gcc/ada/Make-generated.in
     mv ${S}/gcc/ada/gcc-interface/Makefile.in.backup ${S}/gcc/ada/gcc-interface/Makefile.in
     mv ${S}/libada/Makefile.in.backup ${S}/libada/Makefile.in
+}
+
+do_install:append() {
+    chown -R root:root ${D}/*
 }
