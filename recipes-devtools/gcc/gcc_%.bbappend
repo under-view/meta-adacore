@@ -1,4 +1,5 @@
 inherit gnat
+
 require recipes-devtools/gcc/ada-common.inc
 
 SYSROOT_PATH = "gcc-target"
@@ -6,6 +7,7 @@ SYSROOT_PATH = "gcc-target"
 PACKAGES += "\
     gnat \
     gnat-dev \
+    gnat-staticdev \
     gnat-symlinks \
     "
 
@@ -23,13 +25,19 @@ FILES:gnat = "\
     ${bindir}/${TARGET_PREFIX}gnatprep \
     ${bindir}/${TARGET_PREFIX}gnatxref \
     ${libexecdir}/gcc/${TARGET_SYS}/${BINV}/gnat1 \
+    ${gcclibdir}/${TARGET_SYS}/${BINV}/ada_target_properties \
     ${gcclibdir}/${TARGET_SYS}/${BINV}/adalib/lib*${SOLIBS} \
     "
 
 FILES:gnat-dev = "\
     ${gcclibdir}/${TARGET_SYS}/${BINV}/adalib/*.ali \
-    ${gcclibdir}/${TARGET_SYS}/${BINV}/adalib/lib*.a \
     ${gcclibdir}/${TARGET_SYS}/${BINV}/adainclude/*.ad[sb] \
+    ${gcclibdir}/${TARGET_SYS}/${BINV}/adainclude/*.h \
+    ${gcclibdir}/${TARGET_SYS}/${BINV}/adalib/lib*${SOLIBSDEV} \
+    "
+
+FILES:gnat-staticdev = "\
+    ${gcclibdir}/${TARGET_SYS}/${BINV}/adalib/lib*.a \
     "
 
 FILES:gnat-symlinks = "\
@@ -59,6 +67,13 @@ do_configure:prepend() {
     sed -i 's@test x\"\$errors\" = x && test -f conftest.\$ac_objext;@test -f conftest.\$ac_objext;@g' \
            ${S}/configure
 
+    # Copy over shared objects that only reside in RECIPE_SYSROOT_NATIVE at time of build
+    # over to a location that is viewable during builds. So, that gcc builds.
+    mkdir -p ${RECIPE_SYSROOT}/${libdir}/${TARGET_SYS}/${BINV}/adalib
+    cp -a ${RECIPE_SYSROOT_NATIVE}/usr/lib/${TARGET_SYS}/gcc/${TARGET_SYS}/${BINV}/adalib/lib*.so* \
+          ${RECIPE_SYSROOT}/${libdir}/${TARGET_SYS}/${BINV}/adalib
+
+    # Make a backup of the original source before using sed to make changes
     cp -a ${S}/gcc/ada/Make-generated.in ${S}/gcc/ada/Make-generated.in.backup
     cp -a ${S}/gcc/ada/gcc-interface/Makefile.in ${S}/gcc/ada/gcc-interface/Makefile.in.backup
     cp -a ${S}/libada/Makefile.in ${S}/libada/Makefile.in.backup
