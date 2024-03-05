@@ -31,6 +31,16 @@ do_compile () {
         sed -i 's@${STAGING_DIR_TARGET}@/host@g' ${B}/gcc/configargs.h
         sed -i 's@${STAGING_DIR_HOST}@/host@g' ${B}/gcc/configargs.h
 
+        # gcc-crosssdk requires append extra flags to XGCC to get past
+        # ${TARGET_SYS}-ld: cannot find crti.o: No such file or directory
+        # ${TARGET_SYS}-ld: cannot find -ldl: No such file or directory
+        # ${TARGET_SYS}-ld: cannot find -lm: No such file or directory
+        # Libraries exists after classes/glibc-headers.bbclass finishes.
+        # When compiling gnatlib-shared xgcc just can't locate them.
+        sed -i \
+        's@$(SYSROOT_CFLAGS_FOR_TARGET) $(DEBUG_PREFIX_CFLAGS_FOR_TARGET)@$(SYSROOT_CFLAGS_FOR_TARGET) $(EXTRA_XGCC_FLAGS)@g' \
+        ${B}/Makefile
+
         # Prevent sysroot/workdir paths from being used in checksum-options.
         # checksum-options is used to generate a checksum which is embedded into
         # the output binary.

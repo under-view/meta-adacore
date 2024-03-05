@@ -17,7 +17,7 @@ ADA_CFLAGS += "-I${SYSROOT_PATH}/usr/include"
 ADA_CFLAGS += "-I${SYSROOT_PATH}/include"
 ADA_CFLAGS += "-I${RECIPE_SYSROOT}/usr/include"
 
-ADA_FOR_BUILD = "-L${SYSROOT_PATH}/lib"
+ADA_FOR_BUILD = "-L${SYSROOT_PATH}/usr/lib -L${SYSROOT_PATH}/usr/lib64"
 
 TARGET_CFLAGS:append = " ${ADA_CFLAGS}"
 TARGET_CXXFLAGS:append = " ${ADA_CFLAGS}"
