@@ -60,6 +60,11 @@ do_compile () {
 
 do_install:append() {
 
+    sed -i -e 's@./config/i386/t-linux64@$(srcdir)/config/i386/t-linux64@g' \
+              ${B}/gcc/ada/gcc-interface/Makefile
+    sed -i -e 's@./config/i386/t-linux64@$(srcdir)/config/i386/t-linux64@g' \
+              ${B}/gcc/Makefile
+
     # Run ensure required adalib,adainclude gets installed
     DESTDIR="${D}" oe_runmake -C "${B}" install-target-libada
 
