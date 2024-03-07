@@ -2,7 +2,8 @@ inherit ada-sources
 
 DEPENDS += "virtual/gnat1"
 
-SYSROOT_PATH = "${RECIPE_SYSROOT_NATIVE}/usr/bin/${ADA_COMMUNITY}"
+GNAT_INSTALL_LOCATION = "/usr/bin/${ADA_COMMUNITY}"
+SYSROOT_PATH = "${RECIPE_SYSROOT_NATIVE}${GNAT_INSTALL_LOCATION}"
 
 PATH:prepend = "${SYSROOT_PATH}/bin:"
 
@@ -30,5 +31,17 @@ do_compile:prepend() {
     # from alire-gnat-native (glibc-headers.bbclass) gets
     # utilized during compilation
     rm -f ${RECIPE_SYSROOT}/usr/include/limits.h || ret=$?
+
+}
+
+# It appears multiple gcc recipes utilize
+# the same build directory. After building remove
+# any reference to ${GNAT_INSTALL_LOCATION} so that
+# future builds don't incorporate paths that were only
+# meant for gcc-cross & gcc-crosssdk.
+do_gcc_stash_builddir:prepend() {
+    grep -rl "${GNAT_INSTALL_LOCATION}" ${B}/* | \
+    grep -e Makefile -e config | \
+    xargs sed -i 's@${GNAT_INSTALL_LOCATION}@@g' || ret=$?
 
 }
