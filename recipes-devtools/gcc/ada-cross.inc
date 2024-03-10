@@ -26,6 +26,11 @@ TARGET_CPPFLAGS:append = " ${ADA_CFLAGS}"
 
 TARGET_LDFLAGS:append = " ${ADA_FOR_BUILD}"
 
+ADA_CFLAGS += "-B${SYSROOT_PATH}/usr/lib"
+ADA_CFLAGS += "-B${SYSROOT_PATH}/usr/lib64"
+
+export EXTRA_XGCC_FLAGS="${ADA_CFLAGS}"
+
 do_compile:prepend() {
     # Remove empty limit.h file so that the glibc version
     # from alire-gnat-native (glibc-headers.bbclass) gets
