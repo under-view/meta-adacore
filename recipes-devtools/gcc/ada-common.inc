@@ -49,21 +49,16 @@ do_compile () {
         sed -i 's@${STAGING_DIR_HOST}@/host@g' ${B}/gcc/checksum-options
     fi
 
-    sed -i -e 's@./config/i386/t-linux64@$(srcdir)/config/i386/t-linux64@g' \
-              ${B}/gcc/ada/gcc-interface/Makefile
-    sed -i -e 's@./config/i386/t-linux64@$(srcdir)/config/i386/t-linux64@g' \
-              ${B}/gcc/Makefile
+    # Ensure ./config/i386/t-linux64 has $(srcdir) prepended
+    # instead of ./ so when make goes to find path it can actually find it.
+    grep -rlnIE "./config/i386/t-linux64" ${B}/gcc | \
+    xargs sed -i 's@./config/i386/t-linux64@$(srcdir)/config/i386/t-linux64@g' || ret=$?
 
     oe_runmake all-host configure-target-libgcc
     (cd ${B}/${TARGET_SYS}/libgcc; oe_runmake enable-execute-stack.c unwind.h md-unwind-support.h sfp-machine.h gthr-default.h)
 }
 
 do_install:append() {
-
-    sed -i -e 's@./config/i386/t-linux64@$(srcdir)/config/i386/t-linux64@g' \
-              ${B}/gcc/ada/gcc-interface/Makefile
-    sed -i -e 's@./config/i386/t-linux64@$(srcdir)/config/i386/t-linux64@g' \
-              ${B}/gcc/Makefile
 
     # Run ensure required adalib,adainclude gets installed
     DESTDIR="${D}" oe_runmake -C "${B}" install-target-libada
