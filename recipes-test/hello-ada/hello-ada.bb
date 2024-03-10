@@ -20,12 +20,11 @@ S = "${WORKDIR}"
 inherit gnat
 
 do_compile() {
-    oe_run_gnatmake hello.adb
+    oe_run_gnatmake ${S}/hello.adb
 }
 
 do_install() {
-    install -d ${D}${bindir}
-    install -m 0755 hello ${D}${bindir}/hello-ada
+    install -d ${D}/${bindir}
+    cp ${S}/hello ${D}/${bindir}/hello-ada
 }
-
 
