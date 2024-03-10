@@ -44,9 +44,17 @@ do_compile:prepend() {
 # any reference to ${GNAT_INSTALL_LOCATION} so that
 # future builds don't incorporate paths that were only
 # meant for gcc-cross & gcc-crosssdk.
-do_gcc_stash_builddir:prepend() {
-    grep -rl "${GNAT_INSTALL_LOCATION}" ${B}/* | \
-    grep -e Makefile -e config | \
+do_gcc_stash_builddir() {
+    dest=${BUILDDIRSTASH}
+
+    grep -rlnIE "${GNAT_INSTALL_LOCATION}" * | \
     xargs sed -i 's@${GNAT_INSTALL_LOCATION}@@g' || ret=$?
 
+    hardlinkdir . $dest
+    # Makefile does move-if-change which can end up with
+    # 'timestamp' as file contents so break links to those files
+    rm $dest/gcc/include/*.h
+
+    cp gcc/include/*.h $dest/gcc/include/
+    sysroot-relativelinks.py $dest
 }
