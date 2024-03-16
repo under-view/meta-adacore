@@ -3,7 +3,6 @@ ADA := ",ada"
 LANGUAGES .= "${ADA}"
 
 EXTRA_OECONF += "\
-    --disable-libgomp \
     --enable-libada \
     --enable-static=libada \
     "
