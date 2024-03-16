@@ -10,6 +10,22 @@ EXTRA_OECONF += "\
 SYSROOT_PATH ?= ""
 
 do_compile () {
+    # Prevent native/host sysroot path from being used in configargs.h header,
+    # as it will be rewritten when used by other sysroots preventing support
+    # for gcc plugins
+    oe_runmake configure-gcc
+    sed -i 's@${STAGING_DIR_TARGET}@/host@g' ${B}/gcc/configargs.h
+    sed -i 's@${STAGING_DIR_HOST}@/host@g' ${B}/gcc/configargs.h
+
+    # gcc-crosssdk requires appending extra flags to XGCC to get past
+    # ${TARGET_SYS}-ld: cannot find crti.o: No such file or directory
+    # ${TARGET_SYS}-ld: cannot find -ldl: No such file or directory
+    # ${TARGET_SYS}-ld: cannot find -lm: No such file or directory
+    # Libraries exists after classes/glibc-headers.bbclass finishes.
+    # When compiling gnatlib-shared xgcc just can't locate them.
+    sed -i \
+    's@$(SYSROOT_CFLAGS_FOR_TARGET) $(DEBUG_PREFIX_CFLAGS_FOR_TARGET)@$(SYSROOT_CFLAGS_FOR_TARGET) $(EXTRA_XGCC_FLAGS)@g' \
+    ${B}/Makefile
 
     if [ "${SYSROOT_PATH}" != "gcc-nativesdk" ]; then
         export CC="${BUILD_CC}"
@@ -22,23 +38,6 @@ do_compile () {
         export CPPFLAGS_FOR_TARGET="${TARGET_CPPFLAGS}"
         export CXXFLAGS_FOR_TARGET="${TARGET_CXXFLAGS}"
         export LDFLAGS_FOR_TARGET="${TARGET_LDFLAGS}"
-
-        # Prevent native/host sysroot path from being used in configargs.h header,
-        # as it will be rewritten when used by other sysroots preventing support
-        # for gcc plugins
-        oe_runmake configure-gcc
-        sed -i 's@${STAGING_DIR_TARGET}@/host@g' ${B}/gcc/configargs.h
-        sed -i 's@${STAGING_DIR_HOST}@/host@g' ${B}/gcc/configargs.h
-
-        # gcc-crosssdk requires append extra flags to XGCC to get past
-        # ${TARGET_SYS}-ld: cannot find crti.o: No such file or directory
-        # ${TARGET_SYS}-ld: cannot find -ldl: No such file or directory
-        # ${TARGET_SYS}-ld: cannot find -lm: No such file or directory
-        # Libraries exists after classes/glibc-headers.bbclass finishes.
-        # When compiling gnatlib-shared xgcc just can't locate them.
-        sed -i \
-        's@$(SYSROOT_CFLAGS_FOR_TARGET) $(DEBUG_PREFIX_CFLAGS_FOR_TARGET)@$(SYSROOT_CFLAGS_FOR_TARGET) $(EXTRA_XGCC_FLAGS)@g' \
-        ${B}/Makefile
 
         # Prevent sysroot/workdir paths from being used in checksum-options.
         # checksum-options is used to generate a checksum which is embedded into
