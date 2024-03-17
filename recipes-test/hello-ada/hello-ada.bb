@@ -17,6 +17,8 @@ SRC_URI = "\
 
 S = "${WORKDIR}"
 
+PSEUDO_IGNORE_PATHS .= ",hello.adb"
+
 inherit gnat
 
 do_compile() {
@@ -25,6 +27,5 @@ do_compile() {
 
 do_install() {
     install -d ${D}/${bindir}
-    cp ${S}/hello ${D}/${bindir}/hello-ada
+    install ${S}/hello ${D}/${bindir}/hello-ada
 }
-
