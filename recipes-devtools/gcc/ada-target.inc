@@ -17,9 +17,15 @@ do_configure:prepend() {
        ${RECIPE_SYSROOT}/${libdir}/${TARGET_SYS}/${BINV}/adalib
 
     # Make a backup of the original source before using sed to make changes
-    cp -a ${S}/gcc/ada/Make-generated.in ${S}/gcc/ada/Make-generated.in.backup
-    cp -a ${S}/gcc/ada/gcc-interface/Makefile.in ${S}/gcc/ada/gcc-interface/Makefile.in.backup
-    cp -a ${S}/libada/Makefile.in ${S}/libada/Makefile.in.backup
+    if [ ! -f ${S}/gcc/ada/Make-generated.in.backup ]; then
+        cp -a ${S}/gcc/ada/Make-generated.in ${S}/gcc/ada/Make-generated.in.backup
+    fi
+    if [ ! -f ${S}/gcc/ada/gcc-interface/Makefile.in.backup ]; then
+        cp -a ${S}/gcc/ada/gcc-interface/Makefile.in ${S}/gcc/ada/gcc-interface/Makefile.in.backup
+    fi
+    if [ ! -f ${S}/libada/Makefile.in.backup ]; then
+        cp -a ${S}/libada/Makefile.in ${S}/libada/Makefile.in.backup
+    fi
 
     # Replace generic gnatmake with one the utilizities gcc
     # cross compiler with gnat support generated from the yocto project.
@@ -40,12 +46,16 @@ do_configure:prepend() {
         ${S}/libada/Makefile.in
 }
 
-do_compile:append() {
+do_restore_backup() {
     # Revert changes so it doesn't affect future builds.
-    mv ${S}/gcc/ada/Make-generated.in.backup ${S}/gcc/ada/Make-generated.in
-    mv ${S}/gcc/ada/gcc-interface/Makefile.in.backup ${S}/gcc/ada/gcc-interface/Makefile.in
-    mv ${S}/libada/Makefile.in.backup ${S}/libada/Makefile.in
+    mv ${S}/gcc/ada/Make-generated.in.backup ${S}/gcc/ada/Make-generated.in || ret=$?
+    mv ${S}/gcc/ada/gcc-interface/Makefile.in.backup ${S}/gcc/ada/gcc-interface/Makefile.in || ret=$?
+    mv ${S}/libada/Makefile.in.backup ${S}/libada/Makefile.in || ret=$?
 }
+
+do_restore_backup[nostamp] = "1"
+
+addtask restore_backup after do_compile
 
 do_install:append() {
     chown -R root:root ${D}/*
