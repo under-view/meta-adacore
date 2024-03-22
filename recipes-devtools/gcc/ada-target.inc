@@ -1,14 +1,4 @@
-do_configure:prepend() {
-    # When building gcc that runs on target there are a number
-    # of compiler flags set by OE that gnat1 doesn't support.
-    # Leading to the object file being generated, but
-    # x"$errors" = x fails because $errors is set to the gnat1
-    # WARNING labels
-    #
-    # delete x"$errors" so that ada support for the gcc that
-    # runs on target may be built.
-    sed -i 's@test x\"\$errors\" = x && test -f conftest.\$ac_objext;@test -f conftest.\$ac_objext;@g' \
-           ${S}/configure
+do_compile:prepend() {
 
     # Copy over shared objects that only reside in RECIPE_SYSROOT_NATIVE at time of build
     # over to a location that is viewable during builds. So, that gcc builds.
@@ -16,46 +6,7 @@ do_configure:prepend() {
     cp ${RECIPE_SYSROOT_NATIVE}/usr/lib/${TARGET_SYS}/gcc/${TARGET_SYS}/${BINV}/adalib/lib*.so* \
        ${RECIPE_SYSROOT}/${libdir}/${TARGET_SYS}/${BINV}/adalib
 
-    # Make a backup of the original source before using sed to make changes
-    if [ ! -f ${S}/gcc/ada/Make-generated.in.backup ]; then
-        cp -a ${S}/gcc/ada/Make-generated.in ${S}/gcc/ada/Make-generated.in.backup
-    fi
-    if [ ! -f ${S}/gcc/ada/gcc-interface/Makefile.in.backup ]; then
-        cp -a ${S}/gcc/ada/gcc-interface/Makefile.in ${S}/gcc/ada/gcc-interface/Makefile.in.backup
-    fi
-    if [ ! -f ${S}/libada/Makefile.in.backup ]; then
-        cp -a ${S}/libada/Makefile.in ${S}/libada/Makefile.in.backup
-    fi
-
-    # Replace generic gnatmake with one the utilizities gcc
-    # cross compiler with gnat support generated from the yocto project.
-    # Can't make this sed command generic as there are targets in the
-    # Makefile with the name gnatmake.
-    sed -i \
-        -e 's@gnatmake -q -g $(GEN_IL_FLAGS)@$(GNATMAKE) --GCC="$(CC)" --GNATLINK="$(GNATLINK)" --GNATBIND="$(GNATBIND)" -q -g $(GEN_IL_FLAGS)@g' \
-        -e 's@gnatmake -q xsnamest@$(GNATMAKE) --GCC="$(CC)" --GNATLINK="$(GNATLINK)" --GNATBIND="$(GNATBIND)" -q xsnamest@g' \
-        -e 's@gnatmake $(GEN_IL_INCLUDES) seinfo_tables.adb@$(GNATMAKE) --GCC="$(CC)" --GNATLINK="$(GNATLINK)" --GNATBIND="$(GNATBIND)" $(GEN_IL_INCLUDES) seinfo_tables.adb@g' \
-        ${S}/gcc/ada/Make-generated.in
-
-    sed -i \
-        -e 's@gnatmake -q xoscons@$(GNATMAKE) --GCC="$(CC)" --GNATLINK="$(GNATLINK)" --GNATBIND="$(GNATBIND)" -q xoscons@g' \
-        ${S}/gcc/ada/gcc-interface/Makefile.in
-
-    sed -i \
-        -e 's@CC=the.host.compiler.should.not.be.needed@CC=$(CC)@g' \
-        ${S}/libada/Makefile.in
 }
-
-do_restore_backup() {
-    # Revert changes so it doesn't affect future builds.
-    mv ${S}/gcc/ada/Make-generated.in.backup ${S}/gcc/ada/Make-generated.in || ret=$?
-    mv ${S}/gcc/ada/gcc-interface/Makefile.in.backup ${S}/gcc/ada/gcc-interface/Makefile.in || ret=$?
-    mv ${S}/libada/Makefile.in.backup ${S}/libada/Makefile.in || ret=$?
-}
-
-do_restore_backup[nostamp] = "1"
-
-addtask restore_backup after do_compile
 
 do_install:append() {
     chown -R root:root ${D}/*
