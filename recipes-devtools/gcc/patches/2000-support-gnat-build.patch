@@ -1,0 +1,89 @@
+replace generic gnatmake
+
+Replace generic gnatmake with one the utilizities gcc
+cross compiler with gnat support generated from the yocto project.
+Along with environment variables that set GNATLINK
+and GNATBIND.
+
+When building gcc that runs on target there are a number
+of compiler flags set by OE that gnat1 doesn't support.
+Leading to the object file being generated, but
+x"$errors" = x fails because $errors is set to the gnat1
+WARNING labels
+
+delete x"$errors" so that ada support for the gcc that
+runs on target may be built.
+
+Upstream-Status: Inappropriate oe specific
+
+Signed-off-by: Vincent Davis Jr <vince@underview.tech>
+
+Index: gcc-13.2.0/configure
+===================================================================
+--- gcc-13.2.0.orig/configure
++++ gcc-13.2.0/configure
+@@ -5574,7 +5574,7 @@ acx_cv_cc_gcc_supports_ada=no
+ # given a .adb file, but produce no object file.  So we must check
+ # if an object file was really produced to guard against this.
+ errors=`(${CC} -c conftest.adb) 2>&1 || echo failure`
+-if test x"$errors" = x && test -f conftest.$ac_objext; then
++if test -f conftest.$ac_objext; then
+   acx_cv_cc_gcc_supports_ada=yes
+ fi
+ rm -f conftest.*
+Index: gcc-13.2.0/gcc/ada/gcc-interface/Makefile.in
+===================================================================
+--- gcc-13.2.0.orig/gcc/ada/gcc-interface/Makefile.in
++++ gcc-13.2.0/gcc/ada/gcc-interface/Makefile.in
+@@ -616,7 +616,7 @@ OSCONS_EXTRACT=$(GCC_FOR_ADA_RTS) $(GNAT
+ 	-$(MKDIR) ./bldtools/oscons
+ 	$(RM) $(addprefix ./bldtools/oscons/,$(notdir $^))
+ 	$(CP) $^ ./bldtools/oscons
+-	(cd ./bldtools/oscons ; gnatmake -q xoscons)
++	(cd ./bldtools/oscons ; $(GNATMAKE) --GCC="$(CC)" --GNATLINK="$(GNATLINK)" --GNATBIND="$(GNATBIND)" -q xoscons)
+ 
+ $(RTSDIR)/s-oscons.ads: ../stamp-gnatlib1-$(RTSDIR) s-oscons-tmplt.c gsocket.h ./bldtools/oscons/xoscons
+ 	$(RM) $(RTSDIR)/s-oscons-tmplt.i $(RTSDIR)/s-oscons-tmplt.s
+Index: gcc-13.2.0/gcc/ada/Make-generated.in
+===================================================================
+--- gcc-13.2.0.orig/gcc/ada/Make-generated.in
++++ gcc-13.2.0/gcc/ada/Make-generated.in
+@@ -18,7 +18,7 @@ GEN_IL_FLAGS = -gnata -gnat2012 -gnatw.g
+ ada/seinfo_tables.ads ada/seinfo_tables.adb ada/sinfo.h ada/einfo.h ada/nmake.ads ada/nmake.adb ada/seinfo.ads ada/sinfo-nodes.ads ada/sinfo-nodes.adb ada/einfo-entities.ads ada/einfo-entities.adb: ada/stamp-gen_il ; @true
+ ada/stamp-gen_il: $(fsrcdir)/ada/gen_il*
+ 	$(MKDIR) ada/gen_il
+-	cd ada/gen_il; gnatmake -q -g $(GEN_IL_FLAGS) gen_il-main
++	cd ada/gen_il; $(GNATMAKE) --GCC="$(CC)" --GNATLINK="$(GNATLINK)" --GNATBIND="$(GNATBIND)" -q -g $(GEN_IL_FLAGS) gen_il-main
+ 	# Ignore errors to work around finalization issues in older compilers
+ 	- cd ada/gen_il; ./gen_il-main
+ 	$(fsrcdir)/../move-if-change ada/gen_il/seinfo_tables.ads ada/seinfo_tables.ads
+@@ -39,14 +39,14 @@ ada/stamp-gen_il: $(fsrcdir)/ada/gen_il*
+ # would cause bootstrapping with older compilers to fail. You can call it by
+ # hand, as a sanity check that these files are legal.
+ ada/seinfo_tables.o: ada/seinfo_tables.ads ada/seinfo_tables.adb
+-	cd ada ; gnatmake $(GEN_IL_INCLUDES) seinfo_tables.adb -gnatU -gnatX
++	cd ada ; $(GNATMAKE) --GCC="$(CC)" --GNATLINK="$(GNATLINK)" --GNATBIND="$(GNATBIND)" $(GEN_IL_INCLUDES) seinfo_tables.adb -gnatU -gnatX
+ 
+ ada/snames.h ada/snames.ads ada/snames.adb : ada/stamp-snames ; @true
+ ada/stamp-snames : ada/snames.ads-tmpl ada/snames.adb-tmpl ada/snames.h-tmpl ada/xsnamest.adb ada/xutil.ads ada/xutil.adb
+ 	-$(MKDIR) ada/bldtools/snamest
+ 	$(RM) $(addprefix ada/bldtools/snamest/,$(notdir $^))
+ 	$(CP) $^ ada/bldtools/snamest
+-	cd ada/bldtools/snamest; gnatmake -q xsnamest ; ./xsnamest
++	cd ada/bldtools/snamest; $(GNATMAKE) --GCC="$(CC)" --GNATLINK="$(GNATLINK)" --GNATBIND="$(GNATBIND)" -q xsnamest ; ./xsnamest
+ 	$(fsrcdir)/../move-if-change ada/bldtools/snamest/snames.ns ada/snames.ads
+ 	$(fsrcdir)/../move-if-change ada/bldtools/snamest/snames.nb ada/snames.adb
+ 	$(fsrcdir)/../move-if-change ada/bldtools/snamest/snames.nh ada/snames.h
+Index: gcc-13.2.0/libada/Makefile.in
+===================================================================
+--- gcc-13.2.0.orig/libada/Makefile.in
++++ gcc-13.2.0/libada/Makefile.in
+@@ -94,7 +94,7 @@ LIBADA_FLAGS_TO_PASS = \
+         "objext=$(objext)" \
+         "prefix=$(prefix)" \
+         "exeext=.exeext.should.not.be.used " \
+-	'CC=the.host.compiler.should.not.be.needed' \
++	'CC=$(CC)' \
+ 	"GCC_FOR_TARGET=$(CC)" \
+         "CFLAGS=$(CFLAGS)"
+ 
