@@ -2,9 +2,9 @@ do_compile:prepend() {
 
     # Copy over shared objects that only reside in RECIPE_SYSROOT_NATIVE at time of build
     # over to a location that is viewable during builds. So, that gcc builds.
-    mkdir -p ${RECIPE_SYSROOT}/${libdir}/${TARGET_SYS}/${BINV}/adalib
-    cp ${RECIPE_SYSROOT_NATIVE}/usr/lib/${TARGET_SYS}/gcc/${TARGET_SYS}/${BINV}/adalib/lib*.so* \
-       ${RECIPE_SYSROOT}/${libdir}/${TARGET_SYS}/${BINV}/adalib
+    mkdir -p ${STAGING_LIBDIR}/${TARGET_SYS}/${BINV}/adalib
+    cp ${STAGING_LIBDIR_NATIVE}/${TARGET_SYS}/gcc/${TARGET_SYS}/${BINV}/adalib/lib*.so* \
+       ${STAGING_LIBDIR}/${TARGET_SYS}/${BINV}/adalib
 
 }
 
